@@ -15,6 +15,7 @@ import '../widgets/winding_lever.dart';
 import '../widgets/film_counter.dart';
 import '../widgets/film_frame.dart';
 import 'gallery_screen.dart';
+import 'info_screen.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -246,18 +247,34 @@ class _CameraScreenState extends State<CameraScreen> {
                            BoxShadow(color: Colors.black45, blurRadius: 5, offset: Offset(0, 2)),
                         ],
                       ),
-                      child: const Center(
-                        child: Text(
-                          'RETRO CAM 90',
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontFamily: 'Courier', 
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2.0,
-                            shadows: [Shadow(color: Colors.white, offset: Offset(0, 1), blurRadius: 0)],
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          const Text(
+                            'RETRO CAM 90',
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontFamily: 'Courier', 
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2.0,
+                              shadows: [Shadow(color: Colors.white, offset: Offset(0, 1), blurRadius: 0)],
+                            ),
                           ),
-                        ),
+                          Positioned(
+                            left: 8,
+                            child: IconButton(
+                              icon: const Icon(Icons.info_outline, color: Colors.black54),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const InfoScreen()),
+                                );
+                              },
+                              tooltip: 'How to shoot',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     // Divider/Trim between Top Plate and Leather

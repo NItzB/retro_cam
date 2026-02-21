@@ -171,8 +171,9 @@ class _CameraScreenState extends State<CameraScreen> {
         context,
         MaterialPageRoute(builder: (context) => GalleryScreen()),
       ).then((_) {
-        // Option to start new film could be here or in gallery
-        _showNewFilmDialog(); 
+        if (_filmCount <= 0 && !_isDeveloping) {
+          _showNewFilmDialog(); 
+        }
       });
     }
   }

@@ -18,6 +18,7 @@ class _PhysicalGalleryButtonState extends State<PhysicalGalleryButton> {
     return GestureDetector(
       onTapDown: (_) {
         HapticFeedback.selectionClick();
+        SystemSound.play(SystemSoundType.click);
         setState(() => _isPressed = true);
       },
       onTapUp: (_) {

@@ -20,8 +20,9 @@ class _WindingLeverState extends State<WindingLever> with SingleTickerProviderSt
   late AnimationController _controller;
   late Animation<double> _animation;
   double _dragExtent = 0.0;
-  final double _maxDrag = 140.0; // Reduced width slightly
-  final double _triggerThreshold = 100.0; // Distance to trigger wind
+  final double _maxDrag = 90.0; // Reduced drag distance
+  final double _triggerThreshold = 60.0; // Distance to trigger wind
+  double _lastHapticExtent = 0.0;
 
   @override
   void initState() {
@@ -35,8 +36,6 @@ class _WindingLeverState extends State<WindingLever> with SingleTickerProviderSt
 
     _controller.addListener(() {
       setState(() {
-        // When animating back, use controller value
-        // We map 1.0 -> 0.0 (reverse) to dragExtent
         _dragExtent = _animation.value; 
       });
     });
@@ -53,21 +52,25 @@ class _WindingLeverState extends State<WindingLever> with SingleTickerProviderSt
 
     setState(() {
       _dragExtent += details.delta.dx;
-      // Clamp drag
       if (_dragExtent < 0) _dragExtent = 0;
       if (_dragExtent > _maxDrag) _dragExtent = _maxDrag;
+
+      if ((_dragExtent - _lastHapticExtent).abs() > 10.0) {
+        HapticFeedback.selectionClick();
+        _lastHapticExtent = _dragExtent;
+      }
     });
   }
 
   void _handleDragEnd(DragEndDetails details) {
     if (widget.isWound || _controller.isAnimating) return;
+    
+    _lastHapticExtent = 0.0;
 
     if (_dragExtent >= _triggerThreshold) {
-      // Create animation from current spot to 0
       _runSnapBackAnimation();
       widget.onWindComplete();
     } else {
-      // Snap back without triggering
       _runSnapBackAnimation();
     }
   }
@@ -83,17 +86,16 @@ class _WindingLeverState extends State<WindingLever> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 220,
-      height: 60,
-      // decoration: BoxDecoration(border: Border.all(color: Colors.red)), // Debug bounds
+      width: 140, // Shorter lever to fit the row
+      height: 45,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.centerLeft,
         children: [
           // Track / Slot
           Container(
-            width: 180,
-            height: 8, // Thinner slot
+            width: 100, // Correspondingly shorter track
+            height: 6, // Thinner slot
             margin: const EdgeInsets.only(left: 20),
             decoration: BoxDecoration(
               color: Colors.black,
@@ -128,8 +130,8 @@ class _WindingLeverState extends State<WindingLever> with SingleTickerProviderSt
               onHorizontalDragUpdate: _handleDragUpdate,
               onHorizontalDragEnd: _handleDragEnd,
               child: Container(
-                width: 60,
-                height: 60,
+                width: 50,
+                height: 45,
                 color: Colors.transparent, // Hit area
                 child: Stack(
                   alignment: Alignment.center,
@@ -138,8 +140,8 @@ class _WindingLeverState extends State<WindingLever> with SingleTickerProviderSt
                     Transform.rotate(
                       angle: 0.1, // Slight tilt
                       child: Container(
-                        width: 50,
-                        height: 36,
+                        width: 45,
+                        height: 30,
                         decoration: BoxDecoration(
                           color: const Color(0xFF222222),
                           borderRadius: const BorderRadius.horizontal(left: Radius.circular(4), right: Radius.circular(12)),

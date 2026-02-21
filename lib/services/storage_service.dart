@@ -13,7 +13,7 @@ class StorageService {
 
     // Create a masked filename
     final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final String filename = 'temp_img_$timestamp.dat'; 
+    final String filename = 'temp_img_$timestamp.jpg'; 
     final String filePath = path.join(pendingDir, filename);
 
     // Move the file
@@ -44,13 +44,33 @@ class StorageService {
 
   Future<List<File>> getDevelopedPhotos() async {
     final directory = await getApplicationDocumentsDirectory();
+    final List<File> photos = [];
+
     final String developedDir = '${directory.path}/developed_photos';
     final developedDirObj = Directory(developedDir);
 
-    if (await developedDirObj.exists()) {
-      final List<FileSystemEntity> entities = developedDirObj.listSync();
-      return entities.whereType<File>().toList();
+    if (!await developedDirObj.exists()) {
+      return [];
     }
-    return [];
+
+    // Auto-migrate any old .dat files from previous app versions
+    await for (var entity in developedDirObj.list()) {
+      if (entity is File && entity.path.endsWith('.dat')) {
+        if (entity.path.split('/').last.startsWith('temp_img_')) {
+          final newPath = entity.path.replaceAll('.dat', '.jpg');
+          final renamed = await entity.rename(newPath);
+          photos.add(renamed);
+        }
+      } else if (entity is File && entity.path.endsWith('.jpg')) {
+        // Look for all developed '.jpg' files
+        if (entity.path.split('/').last.startsWith('temp_img_')) {
+          photos.add(entity);
+        }
+      }
+    }
+
+    // Sort newest first
+    photos.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+    return photos;
   }
 }

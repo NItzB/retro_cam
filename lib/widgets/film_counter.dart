@@ -8,7 +8,7 @@ class FilmCounter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       decoration: BoxDecoration(
         color: const Color(0xFF222222),
         borderRadius: BorderRadius.circular(6),
@@ -39,7 +39,7 @@ class FilmCounter extends StatelessWidget {
           style: TextStyle(
             color: Colors.orange[700],
             fontFamily: 'Courier', 
-            fontSize: 22,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             letterSpacing: 3,
             shadows: [

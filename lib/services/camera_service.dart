@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:camera_macos/camera_macos.dart';
-import 'package:flutter/foundation.dart'; // For kIsWeb logic if needed, but mainly for Platform check
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CameraService {
   CameraController? _controller;
@@ -22,6 +24,18 @@ class CameraService {
     }
 
     try {
+      // Explicitly request permissions on iOS/Android
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.camera,
+        Permission.microphone,
+      ].request();
+
+      if (statuses[Permission.camera] != PermissionStatus.granted) {
+        print('Camera permission denied');
+        _controller = null;
+        return;
+      }
+
       _cameras = await availableCameras();
       if (_cameras != null && _cameras!.isNotEmpty) {
         // Use the first camera (backend)
@@ -31,6 +45,7 @@ class CameraService {
           enableAudio: false,
         );
         await _controller!.initialize();
+        await _controller!.lockCaptureOrientation(DeviceOrientation.landscapeRight);
       }
     } catch (e) {
       print('Error initializing camera: $e');

@@ -137,7 +137,7 @@ class _CameraScreenState extends State<CameraScreen> {
       await _filmService.decrementFilmCount();
       
       
-      // HapticFeedback.mediumImpact(); // Removed per user request
+      HapticFeedback.mediumImpact();
 
       final newCount = await _filmService.getFilmCount();
 
@@ -207,174 +207,174 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // Leather Background for the main body
-          Positioned.fill(
-            child: Image.asset(
-              'assets/textures/leather_texture.png',
-              fit: BoxFit.cover,
-              color: Colors.black.withOpacity(0.2), // Darken it slightly
-              colorBlendMode: BlendMode.darken,
-            ),
-          ),
-          
-          SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Top Metal Plate
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/textures/brushed_metal.png'),
-                      fit: BoxFit.cover,
-                    ),
-                    boxShadow: [
-                       BoxShadow(color: Colors.black45, blurRadius: 5, offset: Offset(0, 2)),
-                    ],
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(36.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.05),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                    offset: const Offset(0, 0),
                   ),
-                  child: const Center(
-                    child: Text(
-                      'RETRO CAM 90',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontFamily: 'Courier', 
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2.0,
-                        shadows: [Shadow(color: Colors.white, offset: Offset(0, 1), blurRadius: 0)],
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(36.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Top Metal Plate
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/textures/brushed_metal.png'),
+                          fit: BoxFit.cover,
+                        ),
+                        boxShadow: [
+                           BoxShadow(color: Colors.black45, blurRadius: 5, offset: Offset(0, 2)),
+                        ],
                       ),
-                    ),
-                  ),
-                ),
-                // Divider/Trim between Top Plate and Leather
-                Container(
-                  height: 2,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.5), offset: Offset(0, 2), blurRadius: 4),
-                    ]
-                  ),
-                ),
-                
-                // Main Body Area (Leather visible)
-                Expanded(
-                  child: Center(
-                    child: _hasInitError
-                        ? const Text(
-                            'CAMERA ERROR\nCHECK PERMISSIONS',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.red, fontFamily: 'Courier', fontWeight: FontWeight.bold),
-                          )
-                        : Viewfinder(
-                            controller: _cameraService.controller,
-                            // showWindIndicator removed per user request
-                            onMacosCameraCreated: (controller) {
-                              _cameraService.setMacosController(controller);
-                              setState(() {
-                                // On macOS, we consider camera initialized when the view gives us the controller
-                                _isCameraInitialized = true;
-                                _hasInitError = false;
-                              });
-                            },
+                      child: const Center(
+                        child: Text(
+                          'RETRO CAM 90',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontFamily: 'Courier', 
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2.0,
+                            shadows: [Shadow(color: Colors.white, offset: Offset(0, 1), blurRadius: 0)],
                           ),
-                  ),
-                ),
-
-                // Divider/Trim between Leather and Bottom Plate
-                Container(
-                  height: 2,
-                   decoration: BoxDecoration(
-                    color: Colors.black,
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.5), offset: Offset(0, -2), blurRadius: 4),
-                    ]
-                  ),
-                ),
-                // Bottom Metal Plate
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/textures/brushed_metal.png'),
-                      fit: BoxFit.cover,
-                    ),
-                    boxShadow: [ // Removed extra top shadow as the divider handles depth
-                      // BoxShadow(
-                      //   color: Colors.black.withOpacity(0.5),
-                      //   blurRadius: 10,
-                      //   offset: const Offset(0, -4),
-                      // ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        height: 80, // Height to accommodate the tallest element (ShutterButton is 70)
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Left: Film Counter
-                            Positioned(
-                              left: 0,
-                              child: GestureDetector(
-                                onLongPress: () async {
-                                  // Debug: Finish roll immediately
-                                  await _filmService.debugSetFilmCount(0);
-                                  await _filmService.startDevelopmentTimer();
-                                  final completeTime = await _filmService.getDevelopmentCompletionTime();
-                                  setState(() {
-                                    _filmCount = 0;
-                                    _isDeveloping = true;
-                                    _developmentCompleteTime = completeTime;
-                                    _startCountdown();
-                                  });
-                                  // HapticFeedback.heavyImpact(); // Removed per user request
-                                },
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Text('FILM', style: TextStyle(color: Colors.black54, fontSize: 10, fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 4),
-                                    FilmCounter(count: _filmCount),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            
-                            // Center: Shutter Button
-                            Align(
-                              alignment: Alignment.center,
-                              child: ShutterButton(
-                                onPressed: _isWound && _filmCount > 0 ? _takePhoto : null,
-                                isEnabled: _isWound && _filmCount > 0,
-                              ),
-                            ),
-
-                            // Right: Winding Lever
-                            Positioned(
-                              right: 0,
-                              child: WindingLever(
-                                onWindComplete: _onWindComplete,
-                                isWound: _isWound,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+                    ),
+                    // Divider/Trim between Top Plate and Leather
+                    Container(
+                      height: 2,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.5), offset: Offset(0, 2), blurRadius: 4),
+                        ]
+                      ),
+                    ),
+                    
+                    // Main Body Area (Leather visible)
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: const AssetImage('assets/textures/leather_texture.png'),
+                            fit: BoxFit.cover,
+                            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.2), BlendMode.darken),
+                          ),
+                        ),
+                        child: Center(
+                          child: _hasInitError
+                              ? const Text(
+                                  'CAMERA ERROR\nCHECK PERMISSIONS',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.red, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                                )
+                              : Viewfinder(
+                                  controller: _cameraService.controller,
+                                  // showWindIndicator removed per user request
+                                  onMacosCameraCreated: (controller) {
+                                    _cameraService.setMacosController(controller);
+                                    setState(() {
+                                      // On macOS, we consider camera initialized when the view gives us the controller
+                                      _isCameraInitialized = true;
+                                      _hasInitError = false;
+                                    });
+                                  },
+                                ),
+                        ),
+                      ),
+                    ),
+
+                    // Divider/Trim between Leather and Bottom Plate
+                    Container(
+                      height: 2,
+                       decoration: BoxDecoration(
+                        color: Colors.black,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.5), offset: Offset(0, -2), blurRadius: 4),
+                        ]
+                      ),
+                    ),
+                    // Bottom Metal Plate
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/textures/brushed_metal.png'),
+                          fit: BoxFit.cover,
+                        ),
+                        boxShadow: [ // Removed extra top shadow as the divider handles depth
+                          // BoxShadow(
+                          //   color: Colors.black.withOpacity(0.5),
+                          //   blurRadius: 10,
+                          //   offset: const Offset(0, -4),
+                          // ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height: 55, // Height to accommodate the tallest element
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                // Left: Film Counter
+                                GestureDetector(
+                                  onLongPress: () async {
+                                    // Debug: Finish roll immediately
+                                    await _filmService.debugSetFilmCount(0);
+                                    await _filmService.startDevelopmentTimer();
+                                    final completeTime = await _filmService.getDevelopmentCompletionTime();
+                                    setState(() {
+                                      _filmCount = 0;
+                                      _isDeveloping = true;
+                                      _developmentCompleteTime = completeTime;
+                                      _startCountdown();
+                                    });
+                                  },
+                                  child: FilmCounter(count: _filmCount),
+                                ),
+                                
+                                // Center: Shutter Button
+                                ShutterButton(
+                                  onPressed: _isWound && _filmCount > 0 ? _takePhoto : null,
+                                  isEnabled: _isWound && _filmCount > 0,
+                                ),
+
+                                // Right: Winding Lever
+                                WindingLever(
+                                  onWindComplete: _onWindComplete,
+                                  isWound: _isWound,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -394,7 +394,7 @@ class _CameraScreenState extends State<CameraScreen> {
                   setState(() {
                     _isDeveloping = false;
                   });
-                  // HapticFeedback.heavyImpact(); // Removed per user request
+                  HapticFeedback.heavyImpact();
                 },
                 child: const Text('DEVELOPING PHOTOS', style: TextStyle(color: Colors.orange, fontSize: 20, letterSpacing: 2)),
               ),

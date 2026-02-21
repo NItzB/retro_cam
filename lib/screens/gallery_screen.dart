@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
 import '../services/storage_service.dart';
 
 class GalleryScreen extends StatelessWidget {
@@ -37,30 +38,47 @@ class GalleryScreen extends StatelessWidget {
               final file = snapshot.data![index];
               final dateString = _getDateFromFilename(file.path);
 
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.file(
-                    file,
-                    fit: BoxFit.cover,
-                  ),
-                  Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: Text(
-                      dateString,
-                      style: TextStyle(
-                        color: Colors.orange,
-                        fontFamily: 'Courier',
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(color: Colors.black, blurRadius: 2, offset: Offset(1, 1))
-                        ],
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullScreenImageScreen(
+                        imageFile: file,
+                        dateString: dateString,
                       ),
                     ),
-                  ),
-                ],
+                  );
+                },
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Image.file(
+                        file,
+                        fit: BoxFit.cover,
+                        // Very aggressive downsampling for thumbnails to prevent OOM
+                        cacheWidth: 300, 
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 4,
+                      right: 4,
+                      child: Container(
+                        color: Colors.black45,
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        child: Text(
+                          dateString,
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontFamily: 'Courier',
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               );
             },
           );
@@ -71,7 +89,7 @@ class GalleryScreen extends StatelessWidget {
 
   String _getDateFromFilename(String path) {
     try {
-      // filename format: temp_img_123456789.dat
+      // filename format: temp_img_123456789.jpg
       final filename = path.split('/').last;
       final timestampStr = filename.split('_')[2].split('.')[0];
       final timestamp = int.parse(timestampStr);
@@ -81,5 +99,102 @@ class GalleryScreen extends StatelessWidget {
     } catch (e) {
       return '';
     }
+  }
+}
+
+class FullScreenImageScreen extends StatelessWidget {
+  final File imageFile;
+  final String dateString;
+
+  const FullScreenImageScreen({
+    super.key,
+    required this.imageFile,
+    required this.dateString,
+  });
+
+  Future<void> _saveToGallery(BuildContext context) async {
+    try {
+      // Check and request permission using gal
+      final requestGranted = await Gal.requestAccess(toAlbum: true);
+      if (requestGranted) {
+        
+        await Gal.putImage(imageFile.path);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Saved to Camera Roll!')),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gallery permission denied.')),
+          );
+        }
+      }
+    } on GalException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: ${e.type.message}')),
+        );
+      }
+    } catch (e) {
+       if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download, color: Colors.white),
+            tooltip: 'Save to Camera Roll',
+            onPressed: () => _saveToGallery(context),
+          ),
+        ],
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 1.0,
+          maxScale: 4.0,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Image.file(
+                imageFile,
+                filterQuality: FilterQuality.low,
+                // Downsample image slightly to prevent memory crashes on older iPhones
+                cacheWidth: 2000, 
+              ),
+              Positioned(
+                bottom: 20,
+                right: 20,
+                child: Text(
+                  dateString,
+                  style: const TextStyle(
+                    color: Colors.orange,
+                    fontFamily: 'Courier',
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(color: Colors.black, blurRadius: 4, offset: Offset(2, 2))
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

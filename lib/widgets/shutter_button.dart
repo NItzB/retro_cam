@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ShutterButton extends StatefulWidget {
   final VoidCallback? onPressed;
@@ -20,7 +21,10 @@ class _ShutterButtonState extends State<ShutterButton> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapDown: (_) {
+        HapticFeedback.selectionClick();
+        setState(() => _isPressed = true);
+      },
       onTapUp: (_) {
         setState(() => _isPressed = false);
         if (widget.isEnabled && widget.onPressed != null) {
@@ -30,8 +34,8 @@ class _ShutterButtonState extends State<ShutterButton> {
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
-        width: 70,
-        height: 70,
+        width: 55,
+        height: 55,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           // Metallic looking gradient

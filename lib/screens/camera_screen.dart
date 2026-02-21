@@ -13,6 +13,7 @@ import '../widgets/viewfinder.dart';
 import '../widgets/shutter_button.dart';
 import '../widgets/winding_lever.dart';
 import '../widgets/film_counter.dart';
+import '../widgets/film_frame.dart';
 import 'gallery_screen.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -38,6 +39,7 @@ class _CameraScreenState extends State<CameraScreen> {
   DateTime? _developmentCompleteTime;
   Timer? _countdownTimer;
   Duration _timeRemaining = Duration.zero;
+  Future<List<File>>? _pendingPhotosFuture;
 
   @override
   void initState() {
@@ -69,6 +71,7 @@ class _CameraScreenState extends State<CameraScreen> {
           setState(() {
             _isDeveloping = true;
             _developmentCompleteTime = completeTime;
+            _pendingPhotosFuture = _storageService.getPendingPhotos();
             _startCountdown();
           });
         }
@@ -152,6 +155,7 @@ class _CameraScreenState extends State<CameraScreen> {
         setState(() {
           _isDeveloping = true;
           _developmentCompleteTime = completeTime;
+          _pendingPhotosFuture = _storageService.getPendingPhotos();
           _startCountdown();
         });
       }
@@ -382,39 +386,78 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget _buildDevelopmentScreen() {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (_isDeveloping) ...[
-              GestureDetector(
-                onLongPress: () async {
-                  // Debug: Skip development timer
-                  await _filmService.debugForceCompleteDevelopment();
-                  setState(() {
-                    _isDeveloping = false;
-                  });
-                  HapticFeedback.heavyImpact();
-                },
-                child: const Text('DEVELOPING PHOTOS', style: TextStyle(color: Colors.orange, fontSize: 20, letterSpacing: 2)),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                '${_timeRemaining.inHours}:${(_timeRemaining.inMinutes % 60).toString().padLeft(2, '0')}:${(_timeRemaining.inSeconds % 60).toString().padLeft(2, '0')}',
-                style: const TextStyle(color: Colors.white, fontSize: 40, fontFamily: 'Courier'),
-              ),
-              const SizedBox(height: 20),
-              const Text('Please wait...', style: TextStyle(color: Colors.grey)),
-            ] else ...[
-              const Text('DEVELOPMENT COMPLETE', style: TextStyle(color: Colors.green, fontSize: 20, letterSpacing: 2)),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _openGallery,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-                child: const Text('OPEN GALLERY', style: TextStyle(color: Colors.black)),
-              ),
-            ],
-          ],
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_isDeveloping) ...[
+                  GestureDetector(
+                    onLongPress: () async {
+                      // Debug: Skip development timer
+                      await _filmService.debugForceCompleteDevelopment();
+                      setState(() {
+                        _isDeveloping = false;
+                      });
+                      HapticFeedback.heavyImpact();
+                    },
+                    child: const Text('DEVELOPING PHOTOS', style: TextStyle(color: Colors.orange, fontSize: 20, letterSpacing: 2)),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    '${_timeRemaining.inHours}:${(_timeRemaining.inMinutes % 60).toString().padLeft(2, '0')}:${(_timeRemaining.inSeconds % 60).toString().padLeft(2, '0')}',
+                    style: const TextStyle(color: Colors.white, fontSize: 32, fontFamily: 'Courier'),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text('Please wait...', style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 200,
+                    child: FutureBuilder<List<File>>(
+                      future: _pendingPhotosFuture,
+                      builder: (context, pendingSnapshot) {
+                        if (pendingSnapshot.connectionState == ConnectionState.waiting) {
+                           return const Center(child: CircularProgressIndicator(color: Colors.orange));
+                        }
+                        if (!pendingSnapshot.hasData || pendingSnapshot.data!.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              'Processing...',
+                              style: TextStyle(color: Colors.white54, fontFamily: 'Courier'),
+                            )
+                          );
+                        }
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: pendingSnapshot.data!.length,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: FilmFrame(
+                                file: pendingSnapshot.data![index],
+                                dateString: '---- -- --',
+                                isPending: true,
+                              ),
+                            );
+                          },
+                        );
+                      }
+                    ),
+                  ),
+                ] else ...[
+                  const Text('DEVELOPMENT COMPLETE', style: TextStyle(color: Colors.green, fontSize: 20, letterSpacing: 2)),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _openGallery,
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                    child: const Text('OPEN GALLERY', style: TextStyle(color: Colors.black)),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

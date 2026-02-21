@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import '../services/storage_service.dart';
+import '../widgets/film_frame.dart';
 
 class GalleryScreen extends StatelessWidget {
   final StorageService _storageService = StorageService();
@@ -27,60 +28,98 @@ class GalleryScreen extends StatelessWidget {
             return const Center(child: Text('No photos yet.', style: TextStyle(color: Colors.white)));
           }
 
-          return GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 2,
-              mainAxisSpacing: 2,
-            ),
-            itemCount: snapshot.data!.length,
-            itemBuilder: (context, index) {
-              final file = snapshot.data![index];
-              final dateString = _getDateFromFilename(file.path);
-
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FullScreenImageScreen(
-                        imageFile: file,
-                        dateString: dateString,
-                      ),
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'DEVELOPED',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontFamily: 'Courier',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
                     ),
-                  );
-                },
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Image.file(
-                        file,
-                        fit: BoxFit.cover,
-                        // Very aggressive downsampling for thumbnails to prevent OOM
-                        cacheWidth: 300, 
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: Container(
-                        color: Colors.black45,
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        child: Text(
-                          dateString,
-                          style: const TextStyle(
-                            color: Colors.orange,
-                            fontFamily: 'Courier',
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              );
-            },
+                SizedBox(
+                  height: 240, // Ideal height for 260w 4:3 frame + sprockets
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: snapshot.data!.length,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemBuilder: (context, index) {
+                      final file = snapshot.data![index];
+                      final dateString = _getDateFromFilename(file.path);
+                      return FilmFrame(
+                        file: file,
+                        dateString: dateString,
+                        isPending: false,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FullScreenImageScreen(
+                                imageFile: file,
+                                dateString: dateString,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 16.0),
+                  child: Text(
+                    'DEVELOPING...',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontFamily: 'Courier',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 240,
+                  child: FutureBuilder<List<File>>(
+                    future: _storageService.getPendingPhotos(),
+                    builder: (context, pendingSnapshot) {
+                      if (pendingSnapshot.connectionState == ConnectionState.waiting) {
+                         return const Center(child: CircularProgressIndicator(color: Colors.orange));
+                      }
+                      if (!pendingSnapshot.hasData || pendingSnapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'No film developing.',
+                            style: TextStyle(color: Colors.white54, fontFamily: 'Courier'),
+                          )
+                        );
+                      }
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: pendingSnapshot.data!.length,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemBuilder: (context, index) {
+                          return FilmFrame(
+                            file: pendingSnapshot.data![index],
+                            dateString: '---- -- --',
+                            isPending: true,
+                          );
+                        },
+                      );
+                    }
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
           );
         },
       ),

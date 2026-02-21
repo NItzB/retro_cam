@@ -41,6 +41,28 @@ class StorageService {
       }
     }
   }
+  Future<List<File>> getPendingPhotos() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final List<File> photos = [];
+    final String pendingDir = '${directory.path}/pending_development';
+    final pendingDirObj = Directory(pendingDir);
+
+    if (!await pendingDirObj.exists()) {
+      return [];
+    }
+
+    await for (var entity in pendingDirObj.list()) {
+      if (entity is File && entity.path.endsWith('.jpg')) {
+        if (entity.path.split('/').last.startsWith('temp_img_')) {
+          photos.add(entity);
+        }
+      }
+    }
+
+    // Sort chronologically (oldest first as they were taken)
+    photos.sort((a, b) => a.lastModifiedSync().compareTo(b.lastModifiedSync()));
+    return photos;
+  }
 
   Future<List<File>> getDevelopedPhotos() async {
     final directory = await getApplicationDocumentsDirectory();

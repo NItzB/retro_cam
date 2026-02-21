@@ -3,11 +3,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 class FilmService {
   static const String _filmCountKey = 'film_count';
   static const String _timerStartKey = 'development_timer_start';
-  static const int _initialFilmCount = 24;
-  static const int _developmentDurationMinutes = 24 * 60; // 24 hours
+  static const int _initialFilmCount = 5; // Reduced for testing
+  static const int _developmentDurationSeconds = 30; // 30 seconds for testing
 
   Future<int> getFilmCount() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('v2_testing_wipe_1')) {
+       await prefs.clear();
+       await prefs.setBool('v2_testing_wipe_1', true);
+       await prefs.setInt(_filmCountKey, _initialFilmCount);
+    }
     return prefs.getInt(_filmCountKey) ?? _initialFilmCount;
   }
 
@@ -36,7 +41,7 @@ class FilmService {
     if (startMillis == null) return null;
     
     return DateTime.fromMillisecondsSinceEpoch(startMillis)
-        .add(const Duration(minutes: _developmentDurationMinutes));
+        .add(const Duration(seconds: _developmentDurationSeconds));
   }
   
   Future<bool> isDevelopmentComplete() async {

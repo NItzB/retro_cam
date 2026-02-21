@@ -50,7 +50,7 @@ class InfoScreen extends StatelessWidget {
             _buildStep(
               icon: Icons.camera,
               title: 'STEP 2: THE SHOT',
-              description: 'You have a limited number of exposures per roll. Frame your shot in the compact viewfinder and tap the red shutter button. \n\nPRO TIP: You can use your phone\'s physical Volume Buttons to snap a picture like a real point-and-shoot camera!',
+              description: 'You have a limited number of exposures per roll. Frame your shot in the compact viewfinder and tap the metallic shutter button on the top right.',
             ),
             const SizedBox(height: 32),
 

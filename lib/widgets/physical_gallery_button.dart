@@ -59,7 +59,7 @@ class _PhysicalGalleryButtonState extends State<PhysicalGalleryButton> {
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.grey[200], // Silver inner button
+              color: Colors.grey[400], // Silver inner button
               border: Border.all(color: Colors.grey[600]!, width: 1.0),
               boxShadow: [
                 if (!_isPressed)

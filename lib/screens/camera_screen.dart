@@ -14,6 +14,7 @@ import '../widgets/shutter_button.dart';
 import '../widgets/winding_lever.dart';
 import '../widgets/film_counter.dart';
 import '../widgets/film_frame.dart';
+import '../widgets/physical_gallery_button.dart';
 import 'gallery_screen.dart';
 import 'info_screen.dart';
 
@@ -376,21 +377,7 @@ class _CameraScreenState extends State<CameraScreen> {
                                       },
                                       child: FilmCounter(count: _filmCount),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.black87,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white24, width: 1),
-                                      ),
-                                      child: IconButton(
-                                        icon: const Icon(Icons.photo_library, color: Colors.orange, size: 22),
-                                        onPressed: _openGallery,
-                                        tooltip: 'Photo Library',
-                                        constraints: const BoxConstraints(),
-                                        padding: const EdgeInsets.all(8),
-                                      ),
-                                    ),
+                                    PhysicalGalleryButton(onPressed: _openGallery),
                                   ],
                                 ),
                                 

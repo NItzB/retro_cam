@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class PhysicalGalleryButton extends StatefulWidget {
   final VoidCallback onPressed;
@@ -12,63 +13,76 @@ class PhysicalGalleryButton extends StatefulWidget {
 class _PhysicalGalleryButtonState extends State<PhysicalGalleryButton> {
   bool _isPressed = false;
 
-  void _handleTapDown(TapDownDetails details) {
-    setState(() {
-      _isPressed = true;
-    });
-  }
-
-  void _handleTapUp(TapUpDetails details) {
-    setState(() {
-      _isPressed = false;
-    });
-    widget.onPressed();
-  }
-
-  void _handleTapCancel() {
-    setState(() {
-      _isPressed = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
+      onTapDown: (_) {
+        HapticFeedback.selectionClick();
+        setState(() => _isPressed = true);
+      },
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onPressed();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 50),
+        duration: const Duration(milliseconds: 100),
         width: 48,
-        height: 36,
-        margin: EdgeInsets.only(top: _isPressed ? 4.0 : 0.0), // Moves down when pressed
+        height: 48,
         decoration: BoxDecoration(
-          color: const Color(0xFF2A2A2A), // Dark plastic button color
-          borderRadius: BorderRadius.circular(6.0),
-          border: Border.all(
-            color: Colors.black87,
-            width: 1.5,
+          shape: BoxShape.circle,
+          // Dark metallic outer ring
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.grey[600]!, Colors.grey[800]!, Colors.black],
+            stops: const [0.0, 0.5, 1.0],
           ),
-          boxShadow: _isPressed
-              ? []
-              : [
+          boxShadow: [
+            if (!_isPressed)
+              BoxShadow(
+                color: Colors.black.withOpacity(0.6),
+                offset: const Offset(3, 3),
+                blurRadius: 4,
+              ),
+            BoxShadow(
+              color: Colors.white.withOpacity(0.2),
+              offset: const Offset(-1, -1),
+              blurRadius: 2,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        // Inner indented circle
+        child: Padding(
+          padding: EdgeInsets.all(_isPressed ? 6.0 : 4.0), // Animate padding for press depth
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[900], // Dark inner button
+              border: Border.all(color: Colors.black, width: 1.5),
+              boxShadow: [
+                if (!_isPressed)
                   const BoxShadow(
-                    color: Colors.black,
-                    offset: Offset(0, 4), // Drop shadow simulates physical height
-                    blurRadius: 2,
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    offset: const Offset(0, -1), // Top highlight
+                    color: Colors.white24,
+                    offset: Offset(-1, -1),
                     blurRadius: 1,
                   ),
-                ],
-        ),
-        child: Center(
-          child: Icon(
-            Icons.photo_library,
-            color: _isPressed ? Colors.white70 : Colors.white,
-            size: 20,
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.8),
+                  offset: const Offset(1, 1),
+                  blurRadius: 2,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                Icons.photo_library,
+                color: _isPressed ? Colors.orange[800] : Colors.orange,
+                size: 20,
+              ),
+            ),
           ),
         ),
       ),

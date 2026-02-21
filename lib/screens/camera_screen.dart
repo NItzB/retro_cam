@@ -377,6 +377,7 @@ class _CameraScreenState extends State<CameraScreen> {
                                       },
                                       child: FilmCounter(count: _filmCount),
                                     ),
+                                    const SizedBox(width: 24),
                                     PhysicalGalleryButton(onPressed: _openGallery),
                                   ],
                                 ),

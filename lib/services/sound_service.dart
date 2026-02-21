@@ -23,6 +23,14 @@ class SoundService {
     }
   }
 
+  Future<void> playClickSound() async {
+    try {
+      await _audioChannel.invokeMethod('playSystemSound', {'soundName': 'click'});
+    } catch (e) {
+      SystemSound.play(SystemSoundType.click);
+    }
+  }
+
   void dispose() {
     // Nothing to dispose
   }

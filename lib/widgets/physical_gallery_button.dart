@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../services/sound_service.dart';
 
 class PhysicalGalleryButton extends StatefulWidget {
   final VoidCallback onPressed;
@@ -18,7 +19,7 @@ class _PhysicalGalleryButtonState extends State<PhysicalGalleryButton> {
     return GestureDetector(
       onTapDown: (_) {
         HapticFeedback.selectionClick();
-        SystemSound.play(SystemSoundType.click);
+        SoundService().playClickSound();
         setState(() => _isPressed = true);
       },
       onTapUp: (_) {

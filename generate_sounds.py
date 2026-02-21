@@ -92,7 +92,31 @@ def generate_wind_sound(filename):
              
             obj.writeframesraw(struct.pack('<h', int(sample * 32767)))
 
+def generate_click_sound(filename):
+    sample_rate = 44100
+    duration = 0.05  # Very short click
+    n_frames = int(sample_rate * duration)
+    
+    with wave.open(filename, 'w') as obj:
+        obj.setnchannels(1) # mono
+        obj.setsampwidth(2) # 2 bytes
+        obj.setframerate(sample_rate)
+        
+        for i in range(n_frames):
+            t = i / sample_rate
+            
+            # Sharp click, fast decay
+            envelope = math.exp(-t * 150)
+            noise = random.uniform(-1, 1)
+            # Add a slight metallic ping
+            ping = math.sin(2 * math.pi * 1200 * t) * math.exp(-t * 200)
+            
+            sample = (noise * 0.4 + ping * 0.6) * envelope * 0.8
+             
+            obj.writeframesraw(struct.pack('<h', int(sample * 32767)))
+
 if __name__ == "__main__":
     generate_shutter_sound("assets/sounds/shutter.wav")
     generate_wind_sound("assets/sounds/wind.wav")
+    generate_click_sound("assets/sounds/click.wav")
     print("Vintage sounds generated.")

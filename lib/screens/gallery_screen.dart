@@ -4,105 +4,92 @@ import 'package:gal/gal.dart';
 import '../services/storage_service.dart';
 import '../widgets/film_frame.dart';
 
-class GalleryScreen extends StatelessWidget {
+import '../models/film_roll.dart';
+import 'roll_details_screen.dart';
+
+class GalleryScreen extends StatefulWidget {
+  const GalleryScreen({super.key});
+
+  @override
+  State<GalleryScreen> createState() => _GalleryScreenState();
+}
+
+class _GalleryScreenState extends State<GalleryScreen> {
   final StorageService _storageService = StorageService();
 
-  GalleryScreen({super.key});
+  void _renameRoll(FilmRoll roll) {
+    final TextEditingController controller = TextEditingController(text: roll.name);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename Film Roll'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: "Enter roll name"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+             onPressed: () async {
+                final newName = controller.text.trim();
+                if (newName.isNotEmpty) {
+                    await _storageService.renameFilmRoll(roll.id, newName);
+                    setState(() {});
+                }
+                Navigator.pop(context);
+             },
+             child: const Text('Save'),
+          )
+        ],
+      )
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Developed Photos', style: TextStyle(color: Colors.white)),
+        title: const Text('Photo Library', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: FutureBuilder<List<File>>(
-        future: _storageService.getDevelopedPhotos(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No photos yet.', style: TextStyle(color: Colors.white)));
-          }
-
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'DEVELOPED',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontFamily: 'Courier',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Developing Section
+            FutureBuilder<List<File>>(
+              future: _storageService.getPendingPhotos(),
+              builder: (context, pendingSnapshot) {
+                if (pendingSnapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox();
+                }
+                if (!pendingSnapshot.hasData || pendingSnapshot.data!.isEmpty) {
+                  return const SizedBox();
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'CURRENTLY DEVELOPING',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontFamily: 'Courier',
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                SizedBox(
-                  height: 240, // Ideal height for 260w 4:3 frame + sprockets
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: snapshot.data!.length,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemBuilder: (context, index) {
-                      final file = snapshot.data![index];
-                      final dateString = _getDateFromFilename(file.path);
-                      return FilmFrame(
-                        file: file,
-                        dateString: dateString,
-                        isPending: false,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => FullScreenImageScreen(
-                                imageFile: file,
-                                dateString: dateString,
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 16.0),
-                  child: Text(
-                    'DEVELOPING...',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontFamily: 'Courier',
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  height: 240,
-                  child: FutureBuilder<List<File>>(
-                    future: _storageService.getPendingPhotos(),
-                    builder: (context, pendingSnapshot) {
-                      if (pendingSnapshot.connectionState == ConnectionState.waiting) {
-                         return const Center(child: CircularProgressIndicator(color: Colors.orange));
-                      }
-                      if (!pendingSnapshot.hasData || pendingSnapshot.data!.isEmpty) {
-                        return const Center(
-                          child: Text(
-                            'No film developing.',
-                            style: TextStyle(color: Colors.white54, fontFamily: 'Courier'),
-                          )
-                        );
-                      }
-                      return ListView.builder(
+                    SizedBox(
+                      height: 240,
+                      child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: pendingSnapshot.data!.length,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -113,31 +100,120 @@ class GalleryScreen extends StatelessWidget {
                             isPending: true,
                           );
                         },
-                      );
-                    }
-                  ),
-                ),
-                const SizedBox(height: 32),
-              ],
+                      ),
+                    ),
+                  ],
+                );
+              }
             ),
-          );
-        },
+            
+            // Developed Rolls Section
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 8.0),
+              child: Text(
+                'FILM ARCHIVE',
+                style: TextStyle(
+                  color: Colors.orange,
+                  fontFamily: 'Courier',
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+            ),
+            FutureBuilder<List<FilmRoll>>(
+              future: _storageService.getFilmRolls(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: Colors.orange));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('No developed film rolls yet.', style: TextStyle(color: Colors.white54, fontFamily: 'Courier')),
+                  );
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    final roll = snapshot.data![index];
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      leading: Container(
+                        width: 60,
+                        height: 60,
+                        color: const Color(0xFF1B1B1B),
+                        child: roll.previewPhoto != null
+                            ? Image.file(roll.previewPhoto!, fit: BoxFit.cover, cacheWidth: 200)
+                            : const Icon(Icons.broken_image, color: Colors.white54),
+                      ),
+                      title: Text(roll.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                      subtitle: Text('${roll.photos.length} photos • ${roll.date.month}/${roll.date.day}/${roll.date.year}', 
+                        style: const TextStyle(color: Colors.white54, fontFamily: 'Courier', fontSize: 12)
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.white54, size: 20),
+                            onPressed: () => _renameRoll(roll),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.white54, size: 20),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Delete Film Roll?'),
+                                  content: Text('Are you sure you want to permanently delete "${roll.name}" and all of its photos?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                      onPressed: () async {
+                                        Navigator.pop(context);
+                                        await _storageService.deleteFilmRoll(roll.id);
+                                        if (context.mounted) {
+                                          setState(() {});
+                                        }
+                                      },
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          const Icon(Icons.chevron_right, color: Colors.white54),
+                        ],
+                      ),
+                      onTap: () async {
+                        final bool? changed = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RollDetailsScreen(roll: roll),
+                          ),
+                        );
+                        if (changed == true && context.mounted) {
+                          setState(() {});
+                        }
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
-  }
-
-  String _getDateFromFilename(String path) {
-    try {
-      // filename format: temp_img_123456789.jpg
-      final filename = path.split('/').last;
-      final timestampStr = filename.split('_')[2].split('.')[0];
-      final timestamp = int.parse(timestampStr);
-      final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-      // Format: '98 10 24' (Year Month Day retro style)
-      return "'${date.year % 100} ${date.month.toString().padLeft(2, '0')} ${date.day.toString().padLeft(2, '0')}";
-    } catch (e) {
-      return '';
-    }
   }
 }
 
@@ -198,6 +274,37 @@ class FullScreenImageScreen extends StatelessWidget {
             icon: const Icon(Icons.download, color: Colors.white),
             tooltip: 'Save to Camera Roll',
             onPressed: () => _saveToGallery(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            tooltip: 'Delete Photo',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Photo?'),
+                  content: const Text('Are you sure you want to permanently delete this photo?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      onPressed: () async {
+                        Navigator.pop(context); // Close dialog
+                        final storage = StorageService();
+                        await storage.deletePhoto(imageFile);
+                        if (context.mounted) {
+                          Navigator.pop(context, true); // Pop screen, return true for refresh
+                        }
+                      },
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),

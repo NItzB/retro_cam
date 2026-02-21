@@ -339,21 +339,41 @@ class _CameraScreenState extends State<CameraScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // Left: Film Counter
-                                GestureDetector(
-                                  onLongPress: () async {
-                                    // Debug: Finish roll immediately
-                                    await _filmService.debugSetFilmCount(0);
-                                    await _filmService.startDevelopmentTimer();
-                                    final completeTime = await _filmService.getDevelopmentCompletionTime();
-                                    setState(() {
-                                      _filmCount = 0;
-                                      _isDeveloping = true;
-                                      _developmentCompleteTime = completeTime;
-                                      _startCountdown();
-                                    });
-                                  },
-                                  child: FilmCounter(count: _filmCount),
+                                // Left: Film Counter & Gallery Button
+                                Row(
+                                  children: [
+                                    GestureDetector(
+                                      onLongPress: () async {
+                                        // Debug: Finish roll immediately
+                                        await _filmService.debugSetFilmCount(0);
+                                        await _filmService.startDevelopmentTimer();
+                                        final completeTime = await _filmService.getDevelopmentCompletionTime();
+                                        setState(() {
+                                          _filmCount = 0;
+                                          _isDeveloping = true;
+                                          _developmentCompleteTime = completeTime;
+                                          _pendingPhotosFuture = _storageService.getPendingPhotos();
+                                          _startCountdown();
+                                        });
+                                      },
+                                      child: FilmCounter(count: _filmCount),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black87,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white24, width: 1),
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(Icons.photo_library, color: Colors.orange, size: 22),
+                                        onPressed: _openGallery,
+                                        tooltip: 'Photo Library',
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(8),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 
                                 // Center: Shutter Button

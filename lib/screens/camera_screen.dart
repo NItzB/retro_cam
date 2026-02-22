@@ -171,27 +171,27 @@ class _CameraScreenState extends State<CameraScreen> {
 
                 switch (type) {
                   case VintageFilterType.wetzlarMono:
-                    title = 'WETZLAR MONO';
+                    title = 'WETZLAR MONO (1954)';
                     subtitle = 'Timeless German high-contrast black and white.';
                     break;
                   case VintageFilterType.portraGlow:
-                    title = 'PORTRA GLOW';
+                    title = 'PORTRA GLOW (1998)';
                     subtitle = 'Natural skin tones and iconic American warmth.';
                     break;
                   case VintageFilterType.kChrome64:
-                    title = 'K-CHROME 64';
+                    title = 'K-CHROME 64 (1980)';
                     subtitle = 'Classic vivid colors of vintage travel magazines.';
                     break;
                   case VintageFilterType.superiaTeal:
-                    title = 'SUPERIA TEAL';
+                    title = 'SUPERIA TEAL (1998)';
                     subtitle = 'Tokyo-inspired cool tones and urban grit.';
                     break;
                   case VintageFilterType.nightCine:
-                    title = 'NIGHT CINE';
+                    title = 'NIGHT CINE (2012)';
                     subtitle = 'Cinematic night look with cool teal shadows.';
                     break;
                   case VintageFilterType.magicSquare:
-                    title = 'MAGIC SQUARE';
+                    title = 'MAGIC SQUARE (1972)';
                     subtitle = 'Instant nostalgia in a classic square frame.';
                     break;
                   case VintageFilterType.original:

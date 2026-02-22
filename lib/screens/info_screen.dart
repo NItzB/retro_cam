@@ -29,7 +29,7 @@ class InfoScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'This camera mimics the beautiful, tactile experience of shooting disposable film cameras from the 90s. There are no instant previews. No do-overs. Just raw moments.',
+              'This camera mimics the beautiful, tactile experience of shooting vintage film cameras. Select iconic film stocks from different historical eras and shoot. There are no instant previews. No do-overs. Just raw moments.',
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 16,

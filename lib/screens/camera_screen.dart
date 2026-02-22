@@ -15,6 +15,10 @@ import '../widgets/winding_lever.dart';
 import '../widgets/film_counter.dart';
 import '../widgets/film_frame.dart';
 import '../widgets/physical_gallery_button.dart';
+import '../widgets/physical_filter_button.dart';
+import '../widgets/gpu_camera_preview.dart';
+import '../widgets/grain_overlay.dart';
+import '../services/filter_service.dart';
 import 'gallery_screen.dart';
 import 'info_screen.dart';
 
@@ -43,6 +47,9 @@ class _CameraScreenState extends State<CameraScreen> {
   Duration _timeRemaining = Duration.zero;
   Future<List<File>>? _pendingPhotosFuture;
 
+  final FilterService _filterService = FilterService();
+  VintageFilterType _currentFilterType = VintageFilterType.wetzlarMono;
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +69,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _initialize() async {
     await _cameraService.initialize();
+    await _filterService.setFilter(_currentFilterType);
     final count = await _filmService.getFilmCount();
     
     // Check development status
@@ -131,13 +139,135 @@ class _CameraScreenState extends State<CameraScreen> {
     });
   }
 
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.black87,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Colors.white24, width: 2),
+          ),
+          title: const Text(
+            'SELECT FILM STOCK',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Courier',
+              color: Colors.orange,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: VintageFilterType.values
+                .where((type) => type != VintageFilterType.original)
+                .map((type) {
+                final isSelected = _currentFilterType == type;
+                String title = 'ORIGINAL';
+                String subtitle = 'No filter applied';
+
+                switch (type) {
+                  case VintageFilterType.wetzlarMono:
+                    title = 'WETZLAR MONO';
+                    subtitle = 'Timeless German high-contrast black and white.';
+                    break;
+                  case VintageFilterType.portraGlow:
+                    title = 'PORTRA GLOW';
+                    subtitle = 'Natural skin tones and iconic American warmth.';
+                    break;
+                  case VintageFilterType.kChrome64:
+                    title = 'K-CHROME 64';
+                    subtitle = 'Classic vivid colors of vintage travel magazines.';
+                    break;
+                  case VintageFilterType.superiaTeal:
+                    title = 'SUPERIA TEAL';
+                    subtitle = 'Tokyo-inspired cool tones and urban grit.';
+                    break;
+                  case VintageFilterType.nightCine:
+                    title = 'NIGHT CINE';
+                    subtitle = 'Cinematic night look with cool teal shadows.';
+                    break;
+                  case VintageFilterType.magicSquare:
+                    title = 'MAGIC SQUARE';
+                    subtitle = 'Instant nostalgia in a classic square frame.';
+                    break;
+                  case VintageFilterType.original:
+                  default:
+                    title = 'ORIGINAL';
+                    subtitle = 'Raw sensor data without emulation.';
+                    break;
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: InkWell(
+                    onTap: () async {
+                      HapticFeedback.selectionClick();
+                      await _filterService.setFilter(type);
+                      setState(() {
+                        _currentFilterType = type;
+                      });
+                       if (context.mounted) Navigator.of(context).pop();
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.orange.withOpacity(0.8) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? Colors.orange : Colors.white24,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontFamily: 'Courier',
+                              color: isSelected ? Colors.black : Colors.white70,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontFamily: 'Courier',
+                              color: isSelected ? Colors.black87 : Colors.white54,
+                              fontWeight: FontWeight.normal,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _takePhoto() async {
     if (!_isWound || _filmCount <= 0) return;
 
-    await _soundService.playShutterSound();
+    await _soundService.playShutterSound(_currentFilterType);
 
     final file = await _cameraService.takePicture();
     if (file != null) {
+      // Apply vintage film LUT if a filter is active
+      final ioFile = File(file.path);
+      await _filterService.applyFilterToFile(ioFile);
+
       await _storageService.saveImage(file);
       await _filmService.decrementFilmCount();
       
@@ -240,7 +370,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         image: DecorationImage(
                           image: AssetImage('assets/textures/brushed_metal.png'),
                           fit: BoxFit.cover,
@@ -276,6 +406,10 @@ class _CameraScreenState extends State<CameraScreen> {
                               tooltip: 'How to shoot',
                             ),
                           ),
+                          Positioned(
+                            right: 16,
+                            child: PhysicalFilterButton(onPressed: _showFilterDialog),
+                          ),
                         ],
                       ),
                     ),
@@ -293,6 +427,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     // Main Body Area (Leather visible)
                     Expanded(
                       child: Container(
+                        width: double.infinity,
                         decoration: BoxDecoration(
                           image: DecorationImage(
                             image: const AssetImage('assets/textures/leather_texture.png'),
@@ -300,25 +435,47 @@ class _CameraScreenState extends State<CameraScreen> {
                             colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.2), BlendMode.darken),
                           ),
                         ),
-                        child: Center(
-                          child: _hasInitError
-                              ? const Text(
-                                  'CAMERA ERROR\nCHECK PERMISSIONS',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.red, fontFamily: 'Courier', fontWeight: FontWeight.bold),
-                                )
-                              : Viewfinder(
-                                  controller: _cameraService.controller,
-                                  // showWindIndicator removed per user request
-                                  onMacosCameraCreated: (controller) {
-                                    _cameraService.setMacosController(controller);
-                                    setState(() {
-                                      // On macOS, we consider camera initialized when the view gives us the controller
-                                      _isCameraInitialized = true;
-                                      _hasInitError = false;
-                                    });
-                                  },
-                                ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // The filter dial was removed from here. Now entirely modal.
+                            _hasInitError
+                                ? const Text(
+                                    'CAMERA ERROR\nCHECK PERMISSIONS',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: Colors.red, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                                  )
+                                : Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      // The actual viewfinder hardware wrapper (Bezel, reflection)
+                                      Viewfinder(
+                                        controller: _cameraService.controller,
+                                        onMacosCameraCreated: (controller) {
+                                          _cameraService.setMacosController(controller);
+                                          setState(() {
+                                            _isCameraInitialized = true;
+                                            _hasInitError = false;
+                                          });
+                                        },
+                                      ),
+                                      // The GPU Preview layer applied on top (or wrapping) the raw camera stream.
+                                      // Because Viewfinder contains the complex bezel, we need to pass the filter config inside or overlay a ColorFilter here.
+                                      // Actually, we can just overlay the live approximation directly here over the viewfinder bounds.
+                                      if (_cameraService.controller != null && _cameraService.controller!.value.isInitialized && _filterService.currentFilter != null)
+                                        IgnorePointer(
+                                          child: Container(
+                                            width: 176, // Match Viewfinder inner bounds approximately
+                                            height: 126,
+                                            color: _getFilterPreviewOverlayColor(_currentFilterType),
+                                            child: GrainOverlay(
+                                              opacity: _filterService.getGrainIntensity(),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                          ],
                         ),
                       ),
                     ),
@@ -480,12 +637,33 @@ class _CameraScreenState extends State<CameraScreen> {
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
                     child: const Text('OPEN GALLERY', style: TextStyle(color: Colors.black)),
                   ),
-                ],
+                  ],
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Color _getFilterPreviewOverlayColor(VintageFilterType type) {
+    // This provides a live hue overlay approximation for the 60fps preview, 
+    // while the real GPU LUT processes the actual image bytes upon capture.
+    switch (type) {
+      case VintageFilterType.original:
+        return Colors.transparent;
+      case VintageFilterType.wetzlarMono:
+        return Colors.black.withOpacity(0.5); // Desaturated/darker look
+      case VintageFilterType.portraGlow:
+        return Colors.orange.withOpacity(0.15); // Warm wash
+      case VintageFilterType.kChrome64:
+        return Colors.red.withOpacity(0.10); // Subtle red/yellow vibe
+      case VintageFilterType.superiaTeal:
+        return Colors.teal.withOpacity(0.15); // Cool urban green/blue
+      case VintageFilterType.nightCine:
+        return Colors.blue[900]!.withOpacity(0.25); // Heavy cool shadows
+      case VintageFilterType.magicSquare:
+        return Colors.cyan.withOpacity(0.15); // Polaroid chemical fade
+    }
   }
 }

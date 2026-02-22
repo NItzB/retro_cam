@@ -55,6 +55,173 @@ def generate_shutter_sound(filename):
             
             obj.writeframesraw(struct.pack('<h', int(sample * 32767)))
 
+def generate_wetzlar_shutter_sound(filename):
+    sample_rate = 44100
+    duration = 0.3  # Snappier, shorter mechanical duration
+    n_frames = int(sample_rate * duration)
+    
+    with wave.open(filename, 'w') as obj:
+        obj.setnchannels(1) # mono
+        obj.setsampwidth(2) # 2 bytes
+        obj.setframerate(sample_rate)
+        
+        for i in range(n_frames):
+            t = i / sample_rate
+            
+            # 1. Extremely sharp initial snap
+            snap = 0
+            if 0.0 <= t < 0.03:
+                envelope = math.exp(-(t - 0.0) * 150)
+                noise = random.uniform(-1, 1)
+                snap = noise * envelope * 1.2
+                
+            # 2. Resonant metallic ring (the "Wetzlar" sound)
+            ring = 0
+            if 0.0 <= t < 0.2:
+                envelope = math.exp(-t * 15)
+                tone1 = math.sin(2 * math.pi * 3200 * t) 
+                tone2 = math.sin(2 * math.pi * 4500 * t)
+                ring = (tone1 * 0.6 + tone2 * 0.4) * envelope * 0.6
+                
+            # 3. Fast mirror return thud
+            thud = 0
+            if 0.08 <= t < 0.25:
+                envelope = math.exp(-(t - 0.08) * 40)
+                tone = math.sin(2 * math.pi * 120 * t) # Low thud
+                thud = tone * envelope * 0.9
+
+            # Mix
+            sample = (snap + ring + thud) * 0.8
+            
+            # Clipping
+            if sample > 1.0: sample = 1.0
+            if sample < -1.0: sample = -1.0
+            
+            obj.writeframesraw(struct.pack('<h', int(sample * 32767)))
+
+def generate_portra_shutter_sound(filename):
+    sample_rate = 44100
+    duration = 0.4 
+    n_frames = int(sample_rate * duration)
+    with wave.open(filename, 'w') as obj:
+        obj.setnchannels(1) 
+        obj.setsampwidth(2) 
+        obj.setframerate(sample_rate)
+        for i in range(n_frames):
+            t = i / sample_rate
+            snap = 0
+            if 0.0 <= t < 0.05:
+                envelope = math.exp(-(t - 0.0) * 80)
+                noise = random.uniform(-1, 1)
+                snap = noise * envelope * 0.8
+            clack = 0
+            if 0.1 <= t < 0.2:
+                envelope = math.exp(-(t - 0.1) * 50)
+                tone = math.sin(2 * math.pi * 300 * t)
+                clack = tone * envelope * 1.0
+            sample = (snap + clack) * 0.8
+            if sample > 1.0: sample = 1.0
+            if sample < -1.0: sample = -1.0
+            obj.writeframesraw(struct.pack('<h', int(sample * 32767)))
+
+def generate_kchrome_shutter_sound(filename):
+    sample_rate = 44100
+    duration = 0.25 
+    n_frames = int(sample_rate * duration)
+    with wave.open(filename, 'w') as obj:
+        obj.setnchannels(1) 
+        obj.setsampwidth(2) 
+        obj.setframerate(sample_rate)
+        for i in range(n_frames):
+            t = i / sample_rate
+            snap = 0
+            if 0.0 <= t < 0.08:
+                envelope = math.exp(-(t - 0.0) * 100)
+                tone = math.sin(2 * math.pi * 1500 * t) 
+                noise = random.uniform(-1, 1)
+                snap = (tone * 0.4 + noise * 0.6) * envelope * 1.2
+            sample = snap * 0.8
+            if sample > 1.0: sample = 1.0
+            if sample < -1.0: sample = -1.0
+            obj.writeframesraw(struct.pack('<h', int(sample * 32767)))
+
+def generate_superia_shutter_sound(filename):
+    sample_rate = 44100
+    duration = 0.5 
+    n_frames = int(sample_rate * duration)
+    with wave.open(filename, 'w') as obj:
+        obj.setnchannels(1) 
+        obj.setsampwidth(2) 
+        obj.setframerate(sample_rate)
+        for i in range(n_frames):
+            t = i / sample_rate
+            snap = 0
+            if 0.0 <= t < 0.05:
+                envelope = math.exp(-(t - 0.0) * 120)
+                noise = random.uniform(-1, 1)
+                snap = noise * envelope * 0.9
+            motor = 0
+            if 0.05 <= t < 0.4:
+                envelope = math.exp(-(t - 0.05) * 5)
+                tone = math.sin(2 * math.pi * 600 * t)
+                motor = tone * envelope * 0.6
+            sample = (snap + motor) * 0.8
+            if sample > 1.0: sample = 1.0
+            if sample < -1.0: sample = -1.0
+            obj.writeframesraw(struct.pack('<h', int(sample * 32767)))
+
+def generate_nightcine_shutter_sound(filename):
+    sample_rate = 44100
+    duration = 0.6 
+    n_frames = int(sample_rate * duration)
+    with wave.open(filename, 'w') as obj:
+        obj.setnchannels(1) 
+        obj.setsampwidth(2) 
+        obj.setframerate(sample_rate)
+        for i in range(n_frames):
+            t = i / sample_rate
+            snap = 0
+            if 0.0 <= t < 0.1:
+                envelope = math.exp(-(t - 0.0) * 40)
+                tone = math.sin(2 * math.pi * 80 * t)
+                noise = random.uniform(-1, 1)
+                snap = (tone * 0.8 + noise * 0.2) * envelope * 1.2
+            thud = 0
+            if 0.3 <= t < 0.5:
+                envelope = math.exp(-(t - 0.3) * 30)
+                tone = math.sin(2 * math.pi * 60 * t)
+                thud = tone * envelope * 1.2
+            sample = (snap + thud) * 0.8
+            if sample > 1.0: sample = 1.0
+            if sample < -1.0: sample = -1.0
+            obj.writeframesraw(struct.pack('<h', int(sample * 32767)))
+
+def generate_magic_shutter_sound(filename):
+    sample_rate = 44100
+    duration = 1.5 
+    n_frames = int(sample_rate * duration)
+    with wave.open(filename, 'w') as obj:
+        obj.setnchannels(1) 
+        obj.setsampwidth(2) 
+        obj.setframerate(sample_rate)
+        for i in range(n_frames):
+            t = i / sample_rate
+            snap = 0
+            if 0.0 <= t < 0.1:
+                envelope = math.exp(-(t - 0.0) * 80)
+                noise = random.uniform(-1, 1)
+                snap = noise * envelope * 0.8
+            whir = 0
+            if 0.2 <= t < 1.4:
+                envelope = 1.0 if 0.2 <= t < 1.2 else math.exp(-(t - 1.2) * 10)
+                tone1 = math.sin(2 * math.pi * 400 * t)
+                tone2 = math.sin(2 * math.pi * 410 * t)
+                whir = (tone1 * 0.5 + tone2 * 0.5) * envelope * 0.5
+            sample = (snap + whir) * 0.8
+            if sample > 1.0: sample = 1.0
+            if sample < -1.0: sample = -1.0
+            obj.writeframesraw(struct.pack('<h', int(sample * 32767)))
+
 def generate_wind_sound(filename):
     sample_rate = 44100
     duration = 1.2  # Longer winding action
@@ -117,6 +284,12 @@ def generate_click_sound(filename):
 
 if __name__ == "__main__":
     generate_shutter_sound("assets/sounds/shutter.wav")
+    generate_wetzlar_shutter_sound("assets/sounds/wetzlar_shutter.wav")
+    generate_portra_shutter_sound("assets/sounds/portra_shutter.wav")
+    generate_kchrome_shutter_sound("assets/sounds/kchrome_shutter.wav")
+    generate_superia_shutter_sound("assets/sounds/superia_shutter.wav")
+    generate_nightcine_shutter_sound("assets/sounds/nightcine_shutter.wav")
+    generate_magic_shutter_sound("assets/sounds/magic_shutter.wav")
     generate_wind_sound("assets/sounds/wind.wav")
     generate_click_sound("assets/sounds/click.wav")
     print("Vintage sounds generated.")

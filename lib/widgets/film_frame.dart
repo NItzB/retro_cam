@@ -63,27 +63,13 @@ class FilmFrame extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     if (isPending)
-                      ImageFiltered(
-                        imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                        child: ColorFiltered(
-                          // Orange mask characteristic of color negative film
-                          colorFilter: const ColorFilter.mode(
-                            Color(0x88FF9933),
-                            BlendMode.colorBurn,
-                          ),
-                          child: ColorFiltered(
-                            // Invert colors
-                            colorFilter: const ColorFilter.matrix(<double>[
-                              -1,  0,  0, 0, 255,
-                               0, -1,  0, 0, 255,
-                               0,  0, -1, 0, 255,
-                               0,  0,  0, 1,   0,
-                            ]),
-                            child: Image.file(
-                              file,
-                              fit: BoxFit.cover,
-                              cacheWidth: 100,
-                            ),
+                      Container(
+                        color: const Color(0xFF6A3B1C), // Deep brownish-orange simulating color negative base
+                        child: const Center(
+                          child: Icon(
+                            Icons.hourglass_empty,
+                            color: Colors.white24,
+                            size: 40,
                           ),
                         ),
                       )

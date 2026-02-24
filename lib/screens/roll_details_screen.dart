@@ -103,7 +103,8 @@ class _RollDetailsScreenState extends State<RollDetailsScreen> {
   String _getDateFromFilename(String path) {
     try {
       final filename = path.split('/').last;
-      final timestampStr = filename.split('_')[2].split('.')[0];
+      final parts = filename.split('_');
+      final timestampStr = parts.last.split('.')[0];
       final timestamp = int.parse(timestampStr);
       final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
       return "'${date.year % 100} ${date.month.toString().padLeft(2, '0')} ${date.day.toString().padLeft(2, '0')}";

@@ -7,16 +7,17 @@ import 'package:uuid/uuid.dart';
 import '../models/film_roll.dart';
 
 class StorageService {
-  Future<String> saveImage(XFile imageFile) async {
+  Future<String> saveImage(XFile imageFile, {bool isMagicSquare = false}) async {
     final directory = await getApplicationDocumentsDirectory();
     // We might want a 'pending' folder for undeveloped photos
     final String pendingDir = '${directory.path}/pending_development';
 
     await Directory(pendingDir).create(recursive: true);
 
-    // Create a masked filename
+    // Create a masked filename with filter metadata flag
+    final String filterFlag = isMagicSquare ? '_MS_' : '_NO_';
     final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final String filename = 'temp_img_$timestamp.jpg'; 
+    final String filename = 'temp_img${filterFlag}$timestamp.jpg'; 
     final String filePath = path.join(pendingDir, filename);
 
     // Move the file
@@ -89,7 +90,7 @@ class StorageService {
 
     await for (var entity in pendingDirObj.list()) {
       if (entity is File && entity.path.endsWith('.jpg')) {
-        if (entity.path.split('/').last.startsWith('temp_img_')) {
+        if (entity.path.split('/').last.startsWith('temp_img')) {
           photos.add(entity);
         }
       }
@@ -165,7 +166,7 @@ class StorageService {
         final List<File> photos = [];
         await for (var subEntity in entity.list()) {
            if (subEntity is File && subEntity.path.endsWith('.jpg')) {
-             if (subEntity.path.split('/').last.startsWith('temp_img_')) {
+             if (subEntity.path.split('/').last.startsWith('temp_img')) {
                photos.add(subEntity);
              }
            }

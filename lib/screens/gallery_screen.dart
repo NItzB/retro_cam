@@ -321,22 +321,23 @@ class FullScreenImageScreen extends StatelessWidget {
                 // Downsample image slightly to prevent memory crashes on older iPhones
                 cacheWidth: 2000, 
               ),
-              Positioned(
-                bottom: 20,
-                right: 20,
-                child: Text(
-                  dateString,
-                  style: const TextStyle(
-                    color: Colors.orange,
-                    fontFamily: 'Courier',
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(color: Colors.black, blurRadius: 4, offset: Offset(2, 2))
-                    ],
+              if (imageFile.path.contains('_MS_'))
+                Positioned(
+                  bottom: 20,
+                  right: 20,
+                  child: Text(
+                    dateString,
+                    style: const TextStyle(
+                      color: Colors.orange,
+                      fontFamily: 'Courier',
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(color: Colors.black, blurRadius: 4, offset: Offset(2, 2))
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

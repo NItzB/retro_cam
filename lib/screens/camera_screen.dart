@@ -268,7 +268,10 @@ class _CameraScreenState extends State<CameraScreen> {
       final ioFile = File(file.path);
       await _filterService.applyFilterToFile(ioFile);
 
-      await _storageService.saveImage(file);
+      await _storageService.saveImage(
+        file, 
+        isMagicSquare: _currentFilterType == VintageFilterType.magicSquare,
+      );
       await _filmService.decrementFilmCount();
       
       

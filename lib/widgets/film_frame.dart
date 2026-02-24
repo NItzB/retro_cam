@@ -80,7 +80,7 @@ class FilmFrame extends StatelessWidget {
                         cacheWidth: 600, 
                       ),
                     
-                    if (!isPending)
+                    if (!isPending && file.path.contains('_MS_'))
                       Positioned(
                         bottom: 8,
                         right: 8,
